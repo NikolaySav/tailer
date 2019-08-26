@@ -1,0 +1,15 @@
+authType: password
+defaultLines: 10
+servers:
+  -
+    name: "develop"
+    host: "111.222.333.444"
+    port: "22"
+    username: "username"
+    password: "password"
+projects: 
+  - 
+    name: "projectName"
+    filePath: /var/www/projectName/current/storage/logs/laravel.log
+    server: "develop"
+
