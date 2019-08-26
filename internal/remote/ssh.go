@@ -25,7 +25,6 @@ func (c Connection) Run(cmd string) {
 	}
 	go io.Copy(os.Stdout, sessStdOut)
 
-	// todo лишнее?
 	sessStderr, err := sess.StderrPipe()
 	if err != nil {
 		log.Fatal(err)

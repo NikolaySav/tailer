@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"go-tailer/internal/config"
-	"go-tailer/internal/remote"
 	"log"
 	"os"
 	"strconv"
+	"tailer/internal/config"
+	"tailer/internal/remote"
 
 	"golang.org/x/crypto/ssh"
 )

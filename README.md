@@ -5,6 +5,11 @@ Only password authentication can be used for now.
 ## Usage example
 Accoring to config.example.yaml
 
+Build
+```
+go build tailer.go
+```
+
 Read default number of rows
 ```
 ./tailer projectName

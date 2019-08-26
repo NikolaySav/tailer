@@ -1,4 +1,4 @@
-module go-tailer
+module tailer
 
 go 1.12
 
