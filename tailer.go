@@ -68,7 +68,7 @@ func main() {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	client, err := ssh.Dial("tcp", "192.168.2.114:22", sshConfig)
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", server.Host, server.Port), sshConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
