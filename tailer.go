@@ -92,7 +92,7 @@ func newBastionHostSshClient(project config.Project) (*ssh.Client, *ssh.Client) 
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	// ssh to bastion server
+	fmt.Println("Connecting to bastion server")
 	bastionClient, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", bastionServer.Host, bastionServer.Port), sshConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -100,7 +100,7 @@ func newBastionHostSshClient(project config.Project) (*ssh.Client, *ssh.Client) 
 
 	targetServerAddr := fmt.Sprintf("%s:%s", targetServer.Host, targetServer.Port)
 
-	// connection to target server
+	fmt.Println("Connecting to target server")
 	conn, err := bastionClient.Dial("tcp", targetServerAddr)
 	if err != nil {
 		log.Fatal(err)
