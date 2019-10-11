@@ -33,9 +33,10 @@ type Env struct {
 }
 
 type Project struct {
-	Name     string `yaml:"name"`
-	FilePath string `yaml:"filePath"`
-	Server   string `yaml:"server"`
+	Name          string `yaml:"name"`
+	FilePath      string `yaml:"filePath"`
+	Server        string `yaml:"server"`
+	BastionServer string `yaml:"bastionServer"`
 }
 
 type Server struct {

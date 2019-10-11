@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+var servers = make(map[string]config.Server)
+
 func main() {
 	if len(os.Args) < 2 || len(os.Args) > 3 {
 		log.Fatal("Provide project name as an argument")
@@ -31,10 +33,7 @@ func main() {
 		lines = c.DefaultLines
 	}
 
-	servers := make(map[string]config.Server)
 	projects := make(map[string]config.Project)
-
-	fmt.Println(c)
 
 	for _, project := range c.Projects {
 		projects[project.Name] = project
@@ -45,39 +44,105 @@ func main() {
 	}
 
 	project, exists := projects[projectName]
-
 	if !exists {
 		log.Fatal("Project config not found")
 	}
 
-	fmt.Println("Project: ", project)
+	var bastionClient, client *ssh.Client
 
-	server, exists := servers[project.Server]
-
-	if !exists {
-		log.Fatal("Project config not found")
-	}
-
-	fmt.Println("Server: ", server.Name)
-
-	sshConfig := &ssh.ClientConfig{
-		User: server.Username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(server.Password),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-
-	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", server.Host, server.Port), sshConfig)
-	if err != nil {
-		log.Fatal(err)
+	// resolve ssh client
+	if project.BastionServer != "" {
+		bastionClient, client = newBastionHostSshClient(project)
+		defer bastionClient.Close()
+	} else {
+		client = newSshClient(project)
 	}
 	defer client.Close()
 
-	conn := &remote.Connection{Client: client}
+	targetConn := remote.Connection{Client: client}
 
 	command := fmt.Sprintf("tail -f -n%d %s", lines, project.FilePath)
 	fmt.Println("Executing: ", command)
 
-	conn.Run(command)
+	targetConn.Run(command)
+}
+
+func newBastionHostSshClient(project config.Project) (*ssh.Client, *ssh.Client) {
+	bastionServer, exists := servers[project.BastionServer]
+
+	if !exists {
+		log.Fatal("BastionServer config not found")
+	}
+
+	fmt.Println("Bastion Server: ", bastionServer.Name)
+
+	targetServer, exists := servers[project.Server]
+
+	if !exists {
+		log.Fatal("Target server config not found")
+	}
+
+	fmt.Println("Target Server: ", targetServer.Name)
+
+	sshConfig := &ssh.ClientConfig{
+		User: bastionServer.Username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(bastionServer.Password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	fmt.Println("Connecting to bastion server")
+	bastionClient, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", bastionServer.Host, bastionServer.Port), sshConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	targetServerAddr := fmt.Sprintf("%s:%s", targetServer.Host, targetServer.Port)
+
+	fmt.Println("Connecting to target server")
+	conn, err := bastionClient.Dial("tcp", targetServerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ncc, chans, reqs, err := ssh.NewClientConn(conn, targetServerAddr, &ssh.ClientConfig{
+		User: targetServer.Username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(targetServer.Password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	targetClient := ssh.NewClient(ncc, chans, reqs)
+
+	return bastionClient, targetClient
+}
+
+func newSshClient(project config.Project) *ssh.Client {
+	targetServer, exists := servers[project.Server]
+
+	if !exists {
+		log.Fatal("Target server config not found")
+	}
+
+	fmt.Println("Target Server: ", targetServer.Name)
+
+	sshConfig := &ssh.ClientConfig{
+		User: targetServer.Username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(targetServer.Password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", targetServer.Host, targetServer.Port), sshConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return client
 }

@@ -7,9 +7,26 @@ servers:
     port: "22"
     username: "username"
     password: "password"
+  -
+    name: "bastionServer"
+    host: "111.222.333.555"
+    port: "22"
+    username: "bastionUsername"
+    password: "bastionPassword"
+  -
+    name: "target"
+    host: "10.1.1.1"
+    port: "22"
+    username: "username"
+    password: "password"
 projects: 
   - 
     name: "projectName"
-    filePath: /var/www/projectName/current/storage/logs/laravel.log
+    filePath: "/var/www/projectName/current/storage/logs/laravel.log"
     server: "develop"
+  -
+    name: "bastionProject"
+    filePath: "/var/www/bastionProject/current/storage/logs/laravel.log"
+    server: "target"
+    bastionServer: "bastionServer"
 
